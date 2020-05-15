@@ -24,7 +24,9 @@ services:
     volumes:
       - ./nats.conf:/etc/nats/nats.conf
   recupl:
-    build: ../cmd/recupl
+    build:
+      context: ../
+      dockerfile: Dockerfile-recupl
     command: -natsurl=nats://nats:4222
     volumes:
       - imgStore:/images
@@ -35,7 +37,9 @@ services:
     depends_on:
       - nats
   evhand:
-    build: ../cmd/evhand
+    build:
+      context: ../
+      dockerfile: Dockerfile-evhand
     command: -natsurl=nats://nats:4222 -ocrdbpath=/data/ocr.db
     volumes:
       - imgStore:/images

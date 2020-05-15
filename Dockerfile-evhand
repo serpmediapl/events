@@ -66,8 +66,8 @@ WORKDIR ${GOPATH}/src/github.com/serpmediapl/home-finance/
 
 COPY . .
 
-RUN go get ./...
 WORKDIR ${GOPATH}/src/github.com/serpmediapl/home-finance/cmd/evhand/
+RUN go get ./...
 
 RUN go build -o app -i main.go
 
