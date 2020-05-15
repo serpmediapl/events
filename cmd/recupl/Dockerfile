@@ -1,0 +1,23 @@
+FROM golang:alpine
+
+RUN apk update \
+    && apk --no-cache add \
+    git \
+    ca-certificates
+
+WORKDIR /go/src/github.com/serpmediapl/home-finance/
+COPY . .
+RUN go get
+WORKDIR /go/src/github.com/serpmediapl/home-finance/cmd/recupl/
+RUN CGO_ENABLED=0 GOOS=linux go build -o app .
+
+FROM scratch
+
+WORKDIR /app
+
+COPY --from=0 /go/src/github.com/serpmediapl/home-finance/cmd/recupl .
+COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+EXPOSE 8000
+
+ENTRYPOINT ["./app"]

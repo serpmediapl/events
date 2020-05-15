@@ -1,0 +1,54 @@
+version: '3.6'
+services:
+  traefik:
+    image: traefik:v2.2
+    command:
+      - --api.insecure=true
+      - --providers.docker
+      - --providers.docker.exposedbydefault=false
+      - --entryPoints.web.address=:80
+      - --entryPoints.websecure.address=:443
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./users:/users
+    labels:
+      - "traefik.http.middlewares.auth.basicauth.usersfile=/users"
+      - "traefik.http.middlewares.auth.basicauth.headerField=X-WebAuth-User"
+  nats:
+    image: nats
+    command: -c /etc/nats/nats.conf --cluster nats://0.0.0.0:6222 --routes=nats-route://rav:12test34@nats:6222
+    volumes:
+      - ./nats.conf:/etc/nats/nats.conf
+  recupl:
+    build: ../cmd/recupl
+    command: -natsurl=nats://nats:4222
+    volumes:
+      - imgStore:/images
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.imgstore.rule=Path(`/upload`)"
+      - "traefik.http.services.imgstore.loadbalancer.server.port=8000"
+    depends_on:
+      - nats
+  evhand:
+    build: ../cmd/evhand
+    command: -natsurl=nats://nats:4222 -ocrdbpath=/data/ocr.db
+    volumes:
+      - imgStore:/images
+      - ocrData:/data
+    depends_on:
+      - nats
+      - traefik
+
+networks:
+  default:
+    external:
+      name: ocr
+
+volumes:
+  imgStore:
+  ocrData:
